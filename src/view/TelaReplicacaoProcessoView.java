@@ -106,12 +106,12 @@ public class TelaReplicacaoProcessoView extends JFrame {
         btnSalvar.addActionListener(e -> {
             try{
                 if(txfProcesso.getText().isEmpty()) {
-                    JOptionPane.showMessageDialog(this, "Informe o PROCESSO");
+                    JOptionPane.showMessageDialog(this, "Informe o PROCESSO.");
                     return;
                 }
                 TB_REPLICACAO_PROCESSO p = new TB_REPLICACAO_PROCESSO();
-                p.setProcesso(txfProcesso.getText());
-                p.setDescricao(txfDescricao.getText());
+                p.setProcesso(txfProcesso.getText().trim());
+                p.setDescricao(txfDescricao.getText().trim());
                 p.setHabilitado(chkHabilitado.isSelected());
 
                 if(modoTela == ModoTela.INSERT) {
@@ -146,35 +146,56 @@ public class TelaReplicacaoProcessoView extends JFrame {
                     JOptionPane.showMessageDialog(this, "ID não carregado para exclusão." );
                     return;
                 }
-
                 int op = JOptionPane.showConfirmDialog(this, "Deseja realmente excluir o registro ?", "Excluir", JOptionPane.YES_NO_OPTION);
-                if (op != JOptionPane.YES_OPTION) {
+                if (op != JOptionPane.YES_OPTION) return;
                     long id = Long.parseLong(txfId.getText());
                     dao.delete(id);
                     JOptionPane.showMessageDialog(this, "Processo excluido!" );
+
+                    modoTela = ModoTela.NENHUM;
 
                     txfId.setText("");
                     txfProcesso.setText("");
                     txfDescricao.setText("");
                     chkHabilitado.setSelected(false);
 
-                    modoTela = ModoTela.NENHUM;
                     txfProcesso.setEnabled(false);
                     txfDescricao.setEnabled(false);
                     chkHabilitado.setEnabled(false);
                     btnSalvar.setEnabled(false);
                     btnExcluir.setEnabled(false);
-                }
             }
             catch (Exception ex ) {
                 ex.printStackTrace();
-                JOptionPane.showMessageDialog(null, "Erro ao excluir: " + ex.getMessage());
+                JOptionPane.showMessageDialog(null, "Erro ao excluir Registro: " + ex.getMessage());
             }
         });
 
         btnBuscar.addActionListener(b ->{
 
-            modoTela = ModoTela.UPDATE;
+            try {
+                ConsultaProcessoDialog dlg = new ConsultaProcessoDialog(this, dao);
+                dlg.setVisible(true);
+
+                TB_REPLICACAO_PROCESSO selecionado = dlg.getSelecionado();
+                if (selecionado == null) return;
+                modoTela = ModoTela.UPDATE;
+                txfId.setText(String.valueOf(selecionado.getId()));
+                txfProcesso.setText(selecionado.getProcesso());
+                txfDescricao.setText(selecionado.getDescricao());
+                chkHabilitado.setSelected(selecionado.isHabilitado());
+
+                txfProcesso.setEnabled(true);
+                txfDescricao.setEnabled(true);
+                chkHabilitado.setEnabled(true);
+                btnSalvar.setEnabled(true);
+                btnExcluir.setEnabled(true);
+            }
+            catch (Exception ex){
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(null, "Erro ao consultar registro: " + ex.getMessage());
+            }
+
         });
     }
 }
